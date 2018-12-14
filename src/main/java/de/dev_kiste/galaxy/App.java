@@ -1,4 +1,4 @@
-package de.dev_kiste;
+package de.dev_kiste.galaxy;
 
 /**
  * Hello world!
