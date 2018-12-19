@@ -52,6 +52,12 @@ public interface GalaxyDriver {
     String getAddress();
 
     /**
+     * Method to get all supported Channels for the driver
+     * @return Supported channels
+     */
+    int[] getSupportedChannels();
+
+    /**
      * Method to get the currently used channel
      *
      * @return The used channel
