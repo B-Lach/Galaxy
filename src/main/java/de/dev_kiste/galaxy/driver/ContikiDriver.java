@@ -37,7 +37,7 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     private String portDescriptor;
     private String serialResponse = "";
 
-    private IntStream allowedChannels = IntStream.rangeClosed(11, 26);
+    private int[] allowedChannels = IntStream.rangeClosed(11, 26).toArray();
 
     /**
      * Default initializer
@@ -87,7 +87,7 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
 
     @Override
     public int[] getSupportedChannels() {
-        return allowedChannels.toArray();
+        return allowedChannels;
     }
 
     @Override
@@ -101,9 +101,9 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
         if(channel < 0) {
             throw new IllegalArgumentException("Channel must not be negative");
         }
-//        if (allowedChannels.anyMatch(x -> x == channel) == false ) {
-//            throw new IllegalArgumentException("Channel is not supported");
-//        }
+        if (IntStream.of(allowedChannels).anyMatch(x -> x == channel) == false ) {
+            throw new IllegalArgumentException("Channel is not supported");
+        }
 
         sendSerialMessage("AT+CH " + channel);
         callbackStack.add(new CallbackContainer(callback, Boolean.class));
@@ -146,10 +146,9 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
 
     @Override
     public void serialEvent(SerialPortEvent serialPortEvent) {
-        if (serialPortEvent.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
+        if (serialPortEvent.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE || port.bytesAvailable() < 0) {
             return;
         }
-
         byte[] newData = new byte[port.bytesAvailable()];
         int numRead = port.readBytes(newData, newData.length);
         String message = new String(newData, StandardCharsets.UTF_8);
