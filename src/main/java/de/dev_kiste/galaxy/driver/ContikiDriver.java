@@ -46,8 +46,8 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
      * @throws IllegalArgumentException if descriptor is null
      */
     public ContikiDriver(String descriptor) throws IllegalArgumentException {
-        if (descriptor == null) {
-            throw new IllegalArgumentException("Descriptor must not be null");
+        if (descriptor == null || descriptor == "") {
+            throw new IllegalArgumentException("Descriptor must not be null or empty");
         }
         portDescriptor = descriptor;
     }
