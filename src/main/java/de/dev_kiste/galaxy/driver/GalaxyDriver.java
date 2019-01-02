@@ -14,15 +14,17 @@ public interface GalaxyDriver {
      *
      * @param msg The message to send
      * @param receiver The receiver - typically the MAC address
+     * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
      */
-    void sendMessage(String msg, String receiver);
+    void sendMessage(String msg, String receiver, GalaxDriverCallback<Boolean> callback);
 
     /**
      * Method to broadcast a specific message to all connected clients
      *
      * @param msg The message to send
+     * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
      */
-    void sendBroadcastMessage(String msg);
+    void sendBroadcastMessage(String msg, GalaxDriverCallback<Boolean> callback);
 
     /**
      * Method to set the handler for incoming messages
@@ -47,12 +49,13 @@ public interface GalaxyDriver {
     /**
      * Method to get the address used by the underlying hardware module
      *
-     * @return Address as String
+     * @param callback The CallbackHandler with the received address from the module
      */
-    String getAddress();
+    void getAddress(GalaxDriverCallback<String> callback);
 
     /**
      * Method to get all supported Channels for the driver
+     *
      * @return Supported channels
      */
     int[] getSupportedChannels();
@@ -60,23 +63,38 @@ public interface GalaxyDriver {
     /**
      * Method to get the currently used channel
      *
-     * @return The used channel
+     * @param callback The CallbackHandler with the currently used channel
      */
-    int getChannel();
+    void getChannel(GalaxDriverCallback<Integer> callback);
 
     /**
      * Method to set the used channel of the underlying hardware module
      *
      * @param channel The channel to use
-     * @return Boolean indicating if the channel was set successfully
+     * @param callback The CallbackHandler with a boolean to indicate if the channel was set
      * @throws IllegalArgumentException if the committed channel is not valid
      */
-    boolean setChannel(int channel) throws IllegalArgumentException;
+    void setChannel(int channel, GalaxDriverCallback<Boolean> callback) throws IllegalArgumentException;
+
+    /**
+     * Method to bootstrap and trying to connect to the underlying module
+     *
+     * @return Boolean indicating if the serial connection was established
+     * @throws IllegalStateException if something went wrong communicating with the module
+     */
+    boolean bootstrap() throws IllegalStateException;
+
+    /**
+     * Method to disconnect from the underlying module
+     *
+     * @return Boolean indicating if the connection was closed successfully
+     */
+    boolean disconnect();
 
     /**
      * Method to trigger a reboot of the underlying hardware module
      *
-     * @return Boolean indicating if the reboot was made
+     * @return Boolean indicating if the reboot has been made
      */
     boolean reboot();
 }
