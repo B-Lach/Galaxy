@@ -16,7 +16,7 @@ public interface GalaxyDriver {
      * @param receiver The receiver - typically the MAC address
      * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
      */
-    void sendMessage(String msg, String receiver, GalaxDriverCallback<Boolean> callback);
+    void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback);
 
     /**
      * Method to broadcast a specific message to all connected clients
@@ -24,7 +24,7 @@ public interface GalaxyDriver {
      * @param msg The message to send
      * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
      */
-    void sendBroadcastMessage(String msg, GalaxDriverCallback<Boolean> callback);
+    void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback);
 
     /**
      * Method to set the handler for incoming messages
@@ -51,7 +51,7 @@ public interface GalaxyDriver {
      *
      * @param callback The CallbackHandler with the received address from the module
      */
-    void getAddress(GalaxDriverCallback<String> callback);
+    void getAddress(GalaxyDriverCallback<String> callback);
 
     /**
      * Method to get all supported Channels for the driver
@@ -65,7 +65,7 @@ public interface GalaxyDriver {
      *
      * @param callback The CallbackHandler with the currently used channel
      */
-    void getChannel(GalaxDriverCallback<Integer> callback);
+    void getChannel(GalaxyDriverCallback<Integer> callback);
 
     /**
      * Method to set the used channel of the underlying hardware module
@@ -74,7 +74,7 @@ public interface GalaxyDriver {
      * @param callback The CallbackHandler with a boolean to indicate if the channel was set
      * @throws IllegalArgumentException if the committed channel is not valid
      */
-    void setChannel(int channel, GalaxDriverCallback<Boolean> callback) throws IllegalArgumentException;
+    void setChannel(int channel, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException;
 
     /**
      * Method to bootstrap and trying to connect to the underlying module

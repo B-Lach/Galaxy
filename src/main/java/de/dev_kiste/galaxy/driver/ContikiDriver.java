@@ -7,9 +7,6 @@ import de.dev_kiste.galaxy.messaging.MessageHandler;
 import de.dev_kiste.galaxy.security.AccessControlHandler;
 import de.dev_kiste.galaxy.security.AllowAllAccessControlHandler;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.stream.IntStream;
@@ -23,10 +20,10 @@ import java.util.stream.IntStream;
 public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
 
     private class CallbackContainer<T> {
-        private GalaxDriverCallback<T> callback;
+        private GalaxyDriverCallback<T> callback;
         private Class<T> type;
 
-        public CallbackContainer(GalaxDriverCallback<T> callback, Class<T> type) {
+        public CallbackContainer(GalaxyDriverCallback<T> callback, Class<T> type) {
             this.callback = callback;
             this.type = type;
         }
@@ -57,14 +54,14 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
 
 
     @Override
-    public void sendMessage(String msg, String receiver, GalaxDriverCallback<Boolean> callback) {
+    public void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback) {
         // TODO: Port must be specified
         sendSerialMessage("AT+SEND " + receiver + " 8765 " + msg);
         callbackStack.add(new CallbackContainer(callback, Boolean.class));
     }
 
     @Override
-    public void sendBroadcastMessage(String msg, GalaxDriverCallback<Boolean> callback) {
+    public void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback) {
         // TODO: Broadcasting is not possible with IPv6 - only multicast cam be used - does it work with Contiki and which
         //  Multicast address do we have to use?
         callback.handleResponse(false);
@@ -83,7 +80,7 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
-    public void getAddress(GalaxDriverCallback<String> callback) {
+    public void getAddress(GalaxyDriverCallback<String> callback) {
         sendSerialMessage("AT+LOCIP");
         callbackStack.add(new CallbackContainer(callback, String.class));
     }
@@ -94,13 +91,13 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
-    public void getChannel(GalaxDriverCallback<Integer> callback) {
+    public void getChannel(GalaxyDriverCallback<Integer> callback) {
         sendSerialMessage("AT+CH");
         callbackStack.add(new CallbackContainer(callback, Integer.class));
     }
 
     @Override
-    public void setChannel(int channel, GalaxDriverCallback<Boolean> callback) throws IllegalArgumentException {
+    public void setChannel(int channel, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException {
         if(channel < 0) {
             throw new IllegalArgumentException("Channel must not be negative");
         }
