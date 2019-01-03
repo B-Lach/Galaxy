@@ -15,16 +15,18 @@ public interface GalaxyDriver {
      * @param msg The message to send
      * @param receiver The receiver - typically the MAC address
      * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
+     * @throws IllegalArgumentException if the message or the receiver is null
      */
-    void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback);
+    void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException;
 
     /**
      * Method to broadcast a specific message to all connected clients
      *
      * @param msg The message to send
      * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
+     * @throws IllegalArgumentException if the message is null
      */
-    void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback);
+    void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException;
 
     /**
      * Method to set the handler for incoming messages
@@ -80,9 +82,9 @@ public interface GalaxyDriver {
      * Method to bootstrap and trying to connect to the underlying module
      *
      * @return Boolean indicating if the serial connection was established
-     * @throws IllegalStateException if something went wrong communicating with the module
+     *
      */
-    boolean bootstrap() throws IllegalStateException;
+    boolean connect();
 
     /**
      * Method to disconnect from the underlying module
