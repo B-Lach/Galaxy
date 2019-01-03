@@ -56,6 +56,13 @@ public interface GalaxyDriver {
     void getAddress(GalaxyDriverCallback<String> callback);
 
     /**
+     * Method to set the address the module should use
+     *
+     * @param address The address to use
+     * @param callback The CallbackHandler with a boolean to indicate if the address was set
+     */
+    void setAddress(String address, GalaxyDriverCallback<Boolean> callback);
+    /**
      * Method to get all supported Channels for the driver
      *
      * @return Supported channels
