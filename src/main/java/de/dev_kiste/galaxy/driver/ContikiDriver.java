@@ -100,6 +100,14 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
+    public void setAddress(String address, GalaxyDriverCallback<Boolean> callback) {
+        // TODO: Must be implemented after logic for the used hw firmware was implemented
+        if (callback != null) {
+            callback.handleResponse(false);
+        }
+    }
+
+    @Override
     public int[] getSupportedChannels() {
         return allowedChannels;
     }
