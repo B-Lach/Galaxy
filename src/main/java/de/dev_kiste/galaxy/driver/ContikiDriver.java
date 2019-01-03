@@ -56,15 +56,24 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     @Override
     public void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback) {
         // TODO: Port must be specified
-        sendSerialMessage("AT+SEND " + receiver + " 8765 " + msg);
-        callbackStack.add(new CallbackContainer(callback, Boolean.class));
+        boolean send = sendSerialMessage("AT+SEND " + receiver + " 8765 " + msg);
+
+        if(callback != null) {
+            if(send == true) {
+                callbackStack.add(new CallbackContainer(callback, Boolean.class));
+            } else {
+                callback.handleResponse(false);
+            }
+        }
     }
 
     @Override
     public void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback) {
-        // TODO: Broadcasting is not possible with IPv6 - only multicast cam be used - does it work with Contiki and which
+        // TODO: Broadcasting is not possible with IPv6 - only multicast can be used - does it work with Contiki and which
         //  Multicast address do we have to use?
-        callback.handleResponse(false);
+        if(callback != null) {
+            callback.handleResponse(false);
+        }
     }
 
     @Override
@@ -80,9 +89,14 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
-    public void getAddress(GalaxyDriverCallback<String> callback) {
-        sendSerialMessage("AT+LOCIP");
-        callbackStack.add(new CallbackContainer(callback, String.class));
+    public void getAddress(GalaxyDriverCallback<String> callback) throws IllegalArgumentException {
+        if(callback == null) {
+            throw new IllegalArgumentException("Callback must not be null!");
+        }
+
+        if(sendSerialMessage("AT+LOCIP") == true) {
+            callbackStack.add(new CallbackContainer(callback, String.class));
+        }
     }
 
     @Override
@@ -91,9 +105,14 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
-    public void getChannel(GalaxyDriverCallback<Integer> callback) {
-        sendSerialMessage("AT+CH");
-        callbackStack.add(new CallbackContainer(callback, Integer.class));
+    public void getChannel(GalaxyDriverCallback<Integer> callback) throws IllegalArgumentException {
+        if(callback == null) {
+            throw new IllegalArgumentException("Callback must not be null!");
+        }
+
+        if(sendSerialMessage("AT+CH") == true) {
+            callbackStack.add(new CallbackContainer(callback, Integer.class));
+        }
     }
 
     @Override
@@ -105,22 +124,20 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
             throw new IllegalArgumentException("Channel is not supported");
         }
 
-        sendSerialMessage("AT+CH " + channel);
-        callbackStack.add(new CallbackContainer(callback, Boolean.class));
+        boolean send = sendSerialMessage("AT+CH " + channel);
+        if(send == true && callback != null) {
+            callbackStack.add(new CallbackContainer(callback, Boolean.class));
+        }
+
     }
 
     @Override
-    public boolean bootstrap() throws IllegalStateException {
+    public boolean connect() {
+        if(port != null && port.isOpen()) {
+            return true;
+        }
         port = SerialPort.getCommPort(portDescriptor);
-
-        if(port == null) {
-            throw new IllegalStateException("Port for the given descriptor was not found");
-        }
         port.setComPortParameters(115200, 8,1, 0);
-
-        if(port.isOpen()) {
-            throw new IllegalStateException("Desired serial port is already in use");
-        }
         port.addDataListener(this);
 
         return port.openPort();
@@ -136,6 +153,12 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
 
     @Override
     public boolean reboot() {
+        if(port == null || port.isOpen() == false) {
+            return false;
+        }
+        if(sendSerialMessage("AT+RST")) {
+            return disconnect();
+        }
         return false;
     }
 
@@ -188,8 +211,13 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
         }
     }
 
-    private void sendSerialMessage(String msg) {
+    private boolean sendSerialMessage(String msg) throws IllegalStateException {
+        if (port == null || port.isOpen() == false) {
+            throw new IllegalStateException("Port is not connected");
+        }
         byte[] byteMsg = (msg + "\r\n").getBytes(StandardCharsets.UTF_8);
         port.writeBytes(byteMsg, byteMsg.length);
+
+        return true;
     }
 }
