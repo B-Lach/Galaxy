@@ -89,6 +89,12 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
+    public int getMaximumPayloadSize() {
+        // TODO: Check if size is correct after sending was finally implemented
+        return 64;
+    }
+
+    @Override
     public void getAddress(GalaxyDriverCallback<String> callback) throws IllegalArgumentException {
         if(callback == null) {
             throw new IllegalArgumentException("Callback must not be null!");

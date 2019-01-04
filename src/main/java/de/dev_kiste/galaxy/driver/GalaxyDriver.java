@@ -49,6 +49,12 @@ public interface GalaxyDriver {
     void setAccessControlHandler(AccessControlHandler handler);
 
     /**
+     * Method to get the maximum size in bytes a single payload can have
+     *
+     * @return payload size in bytes
+     */
+    int getMaximumPayloadSize();
+    /**
      * Method to get the address used by the underlying hardware module
      *
      * @param callback The CallbackHandler with the received address from the module
