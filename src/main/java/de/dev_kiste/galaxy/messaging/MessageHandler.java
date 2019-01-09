@@ -10,7 +10,7 @@ public interface MessageHandler {
      * Method to notify about incoming messages
      *
      * @param msg The message received
-     * @param identifier The sender of the message - typically the MAC address
+     * @param source The sender of the message - typically the MAC address
      */
-    void receivedMessage(String msg, String identifier);
+    void receivedMessage(String msg, String source);
 }
