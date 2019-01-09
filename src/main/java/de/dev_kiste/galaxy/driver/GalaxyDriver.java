@@ -94,10 +94,9 @@ public interface GalaxyDriver {
     /**
      * Method to bootstrap and trying to connect to the underlying module
      *
-     * @return Boolean indicating if the serial connection was established
-     *
+     * @param callback The CallbackHandler with a boolean to indicate if the the connection was established
      */
-    boolean connect();
+    void connect(GalaxyDriverCallback<Boolean> callback);
 
     /**
      * Method to disconnect from the underlying module

@@ -146,15 +146,15 @@ public class ContikiDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
-    public boolean connect() {
+    public void connect(GalaxyDriverCallback<Boolean> callback) throws NullPointerException {
         if(port != null && port.isOpen()) {
-            return true;
+            callback.handleResponse(true);
         }
         port = SerialPort.getCommPort(portDescriptor);
         port.setComPortParameters(115200, 8,1, 0);
         port.addDataListener(this);
 
-        return port.openPort();
+        callback.handleResponse(port.openPort());
     }
 
     @Override
