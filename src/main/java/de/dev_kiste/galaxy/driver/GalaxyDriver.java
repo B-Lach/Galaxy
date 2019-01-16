@@ -3,6 +3,8 @@ package de.dev_kiste.galaxy.driver;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
 import de.dev_kiste.galaxy.security.AccessControlHandler;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author Benny Lach
  *
@@ -14,19 +16,21 @@ public interface GalaxyDriver {
      *
      * @param msg The message to send
      * @param receiver The receiver - typically the MAC address
-     * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
      * @throws IllegalArgumentException if the message or the receiver is null
+     *
+     * @return CompletableFuture
      */
-    void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException;
+    CompletableFuture<Boolean> sendMessage(String msg, String receiver) throws IllegalArgumentException;
 
     /**
      * Method to broadcast a specific message to all connected clients
      *
      * @param msg The message to send
-     * @param callback The CallbackHandler triggered with a boolean to indicate if the message was sent
      * @throws IllegalArgumentException if the message is null
+     *
+     * @return CompletableFuture
      */
-    void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException;
+    CompletableFuture<Boolean> sendBroadcastMessage(String msg) throws IllegalArgumentException;
 
     /**
      * Method to set the handler for incoming messages
@@ -57,17 +61,19 @@ public interface GalaxyDriver {
     /**
      * Method to get the address used by the underlying hardware module
      *
-     * @param callback The CallbackHandler with the received address from the module
+     * @return CompletableFuture
      */
-    void getAddress(GalaxyDriverCallback<String> callback);
+    CompletableFuture<String> getAddress();
 
     /**
      * Method to set the address the module should use
      *
      * @param address The address to use
-     * @param callback The CallbackHandler with a boolean to indicate if the address was set
+     *
+     * @return CompletableFuture
      */
-    void setAddress(String address, GalaxyDriverCallback<Boolean> callback);
+    CompletableFuture<Boolean> setAddress(String address);
+
     /**
      * Method to get all supported Channels for the driver
      *
@@ -78,37 +84,38 @@ public interface GalaxyDriver {
     /**
      * Method to get the currently used channel
      *
-     * @param callback The CallbackHandler with the currently used channel
+     * @return CompletableFuture
      */
-    void getChannel(GalaxyDriverCallback<Integer> callback);
+    CompletableFuture<Integer> getChannel();
 
     /**
      * Method to set the used channel of the underlying hardware module
      *
      * @param channel The channel to use
-     * @param callback The CallbackHandler with a boolean to indicate if the channel was set
+     *
+     * @return CompletableFuture
      * @throws IllegalArgumentException if the committed channel is not valid
      */
-    void setChannel(int channel, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException;
+    CompletableFuture<Boolean> setChannel(int channel) throws IllegalArgumentException;
 
     /**
      * Method to bootstrap and trying to connect to the underlying module
      *
-     * @param callback The CallbackHandler with a boolean to indicate if the the connection was established
+     * @return CompletableFuture
      */
-    void connect(GalaxyDriverCallback<Boolean> callback);
+    CompletableFuture<Boolean> connect();
 
     /**
      * Method to disconnect from the underlying module
      *
-     * @return Boolean indicating if the connection was closed successfully
+     * @return CompletableFuture indicating if the connection was closed successfully
      */
-    boolean disconnect();
+    CompletableFuture<Boolean> disconnect();
 
     /**
      * Method to trigger a reboot of the underlying hardware module
      *
-     * @return Boolean indicating if the reboot has been made
+     * @return CompletableFuture indicating if the reboot has been made
      */
-    boolean reboot();
+    CompletableFuture<Boolean> reboot();
 }
