@@ -1,22 +1,46 @@
 package de.dev_kiste.galaxy.driver;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortDataListener;
-import com.fazecast.jSerialComm.SerialPortEvent;
+
+import com.sun.istack.internal.NotNull;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
+import de.dev_kiste.galaxy.messaging.MessageLogger;
 import de.dev_kiste.galaxy.security.AccessControlHandler;
+import de.dev_kiste.galaxy.security.AccessStatus;
+import de.dev_kiste.galaxy.security.AllowAllAccessControlHandler;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Benny Lach
+ *
+ * GalaxyDriver implementation for a LoRa Device
  */
-public class LoRaDriver implements GalaxyDriver, SerialPortDataListener {
-    private SerialPort port;
+public class LoRaDriver implements GalaxyDriver {
+
+    private class CallbackContainer<T> {
+        private CompletableFuture<T> future;
+        private Class<T> type;
+
+        public CallbackContainer(CompletableFuture<T> callback, Class<T> type) {
+            this.future = callback;
+            this.type = type;
+        }
+    }
 
     private String portDescriptor;
-    private String serialResponse = "";
+    private String configString = "433000000,20,6,12,1,1,0,0,0,0,3000,8,4";
 
+    volatile private ArrayList<CallbackContainer> callbackStack = new ArrayList<>();
+    private SerialPort port;
+    volatile private String serialResponse = "";
+
+    volatile private MessageHandler messageHandler = new MessageLogger();
+    volatile private AccessControlHandler accessControlHandler = new AllowAllAccessControlHandler();
+    volatile private boolean isConnecting = false;
+    volatile private boolean shouldRead = true;
     /**
      * Default initializer
      *
@@ -24,40 +48,110 @@ public class LoRaDriver implements GalaxyDriver, SerialPortDataListener {
      * @throws IllegalArgumentException if descriptor is null
      */
     public LoRaDriver(String descriptor) throws IllegalArgumentException {
-        if (descriptor == null || descriptor == "") {
-            throw new IllegalArgumentException("Descriptor must not be null or empty");
+        if (descriptor == null || descriptor.isEmpty()) {
+            throw new IllegalArgumentException("Descriptor must not be null nor empty");
         }
         portDescriptor = descriptor;
     }
 
     @Override
-    public void sendMessage(String msg, String receiver, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException {
+    public CompletableFuture<Boolean> sendMessage(String msg, String receiver) throws IllegalArgumentException {
+        if(msg == null || receiver == null) {
+            throw new IllegalArgumentException("Message and received must not be null!");
+        }
+        int length = msg.getBytes().length;
 
+        if(!sendSerialMessage("AT+SEND=" + length, false)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        CompletableFuture<Boolean> future = new CompletableFuture();
+        CompletableFuture<Boolean> sizeFuture = new CompletableFuture();
+
+        sizeFuture.thenCompose((didSetSize) -> {
+            if (!didSetSize || !sendSerialMessage(msg, false)) {
+                return CompletableFuture.completedFuture("AT,NOSENDING");
+            }
+            CompletableFuture<String> sendFuture = new CompletableFuture();
+            LoRaDriver.this.callbackStack.add(new CallbackContainer(sendFuture, String.class));
+
+            return sendFuture;
+        }).thenCompose((startSendMessage) -> {
+            if (!startSendMessage.equals("AT,SENDING")) {
+                return CompletableFuture.completedFuture("AT,NOTSENDED");
+            }
+            CompletableFuture<String> didSendFuture = new CompletableFuture();
+            callbackStack.add(new CallbackContainer(didSendFuture, String.class));
+
+            return didSendFuture;
+        }).thenApply((sendedMessage) -> {
+            future.complete(sendedMessage.equals("AT,SENDED"));
+
+            return null;
+        });
+        callbackStack.add(new CallbackContainer(sizeFuture, Boolean.class));
+
+        return future;
     }
 
     @Override
-    public void sendBroadcastMessage(String msg, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException {
-
+    public CompletableFuture<Boolean> sendBroadcastMessage(String msg) throws IllegalArgumentException {
+        return sendMessage(msg, "FFFF");
     }
 
     @Override
     public void setMessageHandler(MessageHandler handler) {
-
+        if(messageHandler != null) {
+            messageHandler = handler;
+        }
     }
 
     @Override
     public void setAccessControlHandler(AccessControlHandler handler) {
-
+        if(handler != null) {
+            accessControlHandler = handler;
+        }
     }
 
     @Override
-    public void getAddress(GalaxyDriverCallback<String> callback) {
-
+    public int getMaximumPayloadSize() {
+        return 250;
     }
 
     @Override
-    public void setAddress(String address, GalaxyDriverCallback<Boolean> callback) {
+    public CompletableFuture<String> getAddress() {
+        if(!sendSerialMessage("AT+ADDR?", false)) {
+            return CompletableFuture.completedFuture("");
+        }
 
+        CompletableFuture<String> future = new CompletableFuture();
+        CompletableFuture<String> response = new CompletableFuture();
+
+        response.thenCompose((result) -> {
+            String[] split = result.split(",");
+            if(split.length != 3 || !split[2].equals("OK")) {
+                future.complete("");
+            } else {
+                String address = split[1];
+
+                future.complete(address.length() == 4 ? address : "");
+            }
+            return null;
+        });
+        callbackStack.add(new CallbackContainer(response, String.class));
+
+        return future;
+    }
+
+    @Override
+    public CompletableFuture<Boolean> setAddress(String address) {
+        if(!sendSerialMessage("AT+ADDR=" + address, false)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        CompletableFuture<Boolean> future = new CompletableFuture();
+
+        callbackStack.add(new CallbackContainer(future, Boolean.class));
+
+        return future;
     }
 
     @Override
@@ -66,55 +160,183 @@ public class LoRaDriver implements GalaxyDriver, SerialPortDataListener {
     }
 
     @Override
-    public void getChannel(GalaxyDriverCallback<Integer> callback) {
-
+    public CompletableFuture<Integer> getChannel() {
+        return CompletableFuture.completedFuture(-1);
     }
 
     @Override
-    public void setChannel(int channel, GalaxyDriverCallback<Boolean> callback) throws IllegalArgumentException {
-
+    public CompletableFuture<Boolean> setChannel(int channel) throws IllegalArgumentException {
+        return CompletableFuture.completedFuture(false);
     }
 
     @Override
-    public boolean connect() {
+    public CompletableFuture<Boolean> connect() throws NullPointerException {
         if(port != null && port.isOpen()) {
-            return true;
+            return CompletableFuture.completedFuture(true);
         }
+        if(!setupSerialConnection()) {
+            return CompletableFuture.completedFuture(false);
+        }
+        return setSerialConfig();
+    }
+
+    private Boolean setupSerialConnection() {
         port = SerialPort.getCommPort(portDescriptor);
-        port.setBaudRate(115200);
-//        port.setComPortParameters(115200, 8,1, 0);
-        port.addDataListener(this);
+        port.setComPortParameters(115200, 8,1, 0);
 
         return port.openPort();
     }
 
-    @Override
-    public boolean disconnect() {
-        return false;
+    private CompletableFuture<Boolean> setSerialConfig() {
+        startReading();
+
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        CompletableFuture<Boolean> configFuture = new CompletableFuture<>();
+        CompletableFuture<Boolean> switchedModeFuture = new CompletableFuture<>();
+
+        callbackStack.add(new CallbackContainer(configFuture, Boolean.class));
+        callbackStack.add(new CallbackContainer(switchedModeFuture, Boolean.class));
+
+        configFuture.thenCompose((didSetConfig) -> {
+            if(!didSetConfig) {
+                callbackStack.clear();
+                isConnecting = false;
+
+                return CompletableFuture.completedFuture(false);
+            }
+            sendSerialMessage("AT+RX", true);
+
+            return switchedModeFuture;
+        }).thenCompose((didSwitchMode) -> {
+            isConnecting = false;
+            future.complete(didSwitchMode);
+
+            return null;
+        });
+        isConnecting = true;
+        sendSerialMessage("AT+CFG=" + configString, true);
+
+        return future;
     }
 
-    @Override
-    public boolean reboot() {
-        return false;
+    private void startReading() {
+        shouldRead = true;
+        Thread t = new Thread(() -> {
+            String message = "";
+            try {
+                while (LoRaDriver.this.shouldRead) {
+                    while (port.bytesAvailable() == 0) {
+                        Thread.sleep(20);
+                    }
+
+                    byte[] readBuffer = new byte[port.bytesAvailable()];
+                    int numRead = port.readBytes(readBuffer, readBuffer.length);
+                    message += new String(readBuffer, StandardCharsets.UTF_8);
+
+                    if(message.endsWith("\r\n")) {
+                        System.out.println("End of response: " + message);
+                        String payload = message.replace("\r\n", "");
+                        message = "";
+
+                        LoRaDriver.this.handleIncomingMessage(payload);
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Reading failed: " + e);
+                message = "";
+            }
+        });
+        t.start();
     }
 
-    @Override
-    public int getListeningEvents() {
-        return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
-    }
-
-    @Override
-    public void serialEvent(SerialPortEvent serialPortEvent) {
-        if (serialPortEvent.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE || port.bytesAvailable() < 0) {
-            return;
+    private void handleIncomingMessage(@NotNull String message) {
+        if(message.startsWith("LR")) {
+            handleRemoteMessage(message);
+        } else if(message.startsWith("AT")){
+            handleModuleMessage(message);
+        } else {
+            System.out.println("Unknown message received: " + message);
         }
-        byte[] newData = new byte[port.bytesAvailable()];
-        int numRead = port.readBytes(newData, newData.length);
-        String message = new String(newData, StandardCharsets.UTF_8);
+    }
 
-        System.out.println("Read " + numRead + " bytes.");
-        System.out.println("Received message: " + message);
+    @Override
+    public CompletableFuture<Boolean> disconnect() {
+        shouldRead = false;
 
-        serialResponse += message;
+        if(port == null || !port.isOpen()) {
+            return CompletableFuture.completedFuture(true);
+        }
+        return CompletableFuture.completedFuture(port.closePort());
+    }
+
+    @Override
+    public CompletableFuture<Boolean> reboot() {
+        if(port == null || !port.isOpen() || !sendSerialMessage("AT+RST", false)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        CompletableFuture<Boolean> future = new CompletableFuture();
+
+        callbackStack.add(new CallbackContainer(future, Boolean.class));
+
+        return future;
+    }
+
+    private void handleRemoteMessage(String message) {
+        // Example Payload:  LR,0000,0A,Hallo Test
+        String[] header = message.substring(0, 9).split(",");
+        // TODO: Ok to ignore message if header size not valid?
+        if(header.length == 3) {
+            String source = header[1];
+            String payload = message.substring(11);
+
+            if(isValidSource(source)) {
+                messageHandler.receivedMessage(payload, header[1]);
+            }
+        }
+    }
+
+    private boolean isValidSource(String source) {
+        return accessControlHandler.getAccessStatus(source) == AccessStatus.AUTHORIZED ||
+                accessControlHandler.determineAuthorizationStatus(source) == AccessStatus.AUTHORIZED;
+    }
+
+    private void handleModuleMessage(String message) {
+        if(callbackStack.size() > 0) {
+            CallbackContainer container = callbackStack.remove(0);
+            switch (container.type.getSimpleName()) {
+                case "String":
+                    container.future.complete(message);
+                    break;
+                case "Integer":
+                    String integerString = message.replace("\nOK\n", "");
+
+                    container.future.complete(Integer.parseInt(integerString));
+                    break;
+                case "Boolean":
+                    container.future.complete(message.endsWith("OK"));
+                    break;
+                default:
+                    // TODO: Use logging not System.out
+                    System.out.println("Unimplemented support type: " + container.type);
+            }
+        } else {
+            // TODO: Use logging not System.out
+            System.out.println("Not able to forward message -> no handler available");
+        }
+    }
+
+    private boolean sendSerialMessage(String msg, boolean isSetupMessage) throws IllegalStateException {
+        if (port == null || !port.isOpen()) {
+            throw new IllegalStateException("Port is not connected");
+        }
+
+        if(!isSetupMessage && isConnecting) {
+            return false;
+        }
+
+        byte[] byteMsg = (msg + "\r\n").getBytes(StandardCharsets.UTF_8);
+        port.writeBytes(byteMsg, byteMsg.length);
+
+        return true;
     }
 }
