@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * GalaxyDriver implementation for a LoRa Device
  */
-public class LoRaDriver implements GalaxyDriver {
+public class HTWLoRaDriver implements GalaxyDriver {
 
     private class CallbackContainer<T> {
         private CompletableFuture<T> future;
@@ -47,7 +47,7 @@ public class LoRaDriver implements GalaxyDriver {
      * @param descriptor descriptor of the used port
      * @throws IllegalArgumentException if descriptor is null
      */
-    public LoRaDriver(String descriptor) throws IllegalArgumentException {
+    public HTWLoRaDriver(String descriptor) throws IllegalArgumentException {
         if (descriptor == null || descriptor.isEmpty()) {
             throw new IllegalArgumentException("Descriptor must not be null nor empty");
         }
@@ -72,7 +72,7 @@ public class LoRaDriver implements GalaxyDriver {
                 return CompletableFuture.completedFuture("AT,NOSENDING");
             }
             CompletableFuture<String> sendFuture = new CompletableFuture();
-            LoRaDriver.this.callbackStack.add(new CallbackContainer(sendFuture, String.class));
+            HTWLoRaDriver.this.callbackStack.add(new CallbackContainer(sendFuture, String.class));
 
             return sendFuture;
         }).thenCompose((startSendMessage) -> {
@@ -144,6 +144,9 @@ public class LoRaDriver implements GalaxyDriver {
 
     @Override
     public CompletableFuture<Boolean> setAddress(String address) {
+        if(address == null) {
+            return CompletableFuture.completedFuture(false);
+        }
         if(!sendSerialMessage("AT+ADDR=" + address, false)) {
             return CompletableFuture.completedFuture(false);
         }
@@ -224,24 +227,24 @@ public class LoRaDriver implements GalaxyDriver {
         Thread t = new Thread(() -> {
             String message = "";
             try {
-                while (LoRaDriver.this.shouldRead) {
-                    while (port.bytesAvailable() == 0) {
+                while (HTWLoRaDriver.this.shouldRead) {
+                    while (port.bytesAvailable() <= 0) {
                         Thread.sleep(20);
                     }
 
                     byte[] readBuffer = new byte[port.bytesAvailable()];
-                    int numRead = port.readBytes(readBuffer, readBuffer.length);
+                    port.readBytes(readBuffer, readBuffer.length);
                     message += new String(readBuffer, StandardCharsets.UTF_8);
 
                     if(message.endsWith("\r\n")) {
-                        System.out.println("End of response: " + message);
                         String payload = message.replace("\r\n", "");
                         message = "";
 
-                        LoRaDriver.this.handleIncomingMessage(payload);
+                        HTWLoRaDriver.this.handleIncomingMessage(payload);
                     }
                 }
             } catch (Exception e) {
+                // TODO: Replace with logger
                 System.out.println("Reading failed: " + e);
                 message = "";
             }
