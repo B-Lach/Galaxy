@@ -1,7 +1,6 @@
 package de.dev_kiste.galaxy.driver;
 
 import de.dev_kiste.galaxy.messaging.MessageHandler;
-import de.dev_kiste.galaxy.security.AccessControlHandler;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -35,7 +34,7 @@ public interface GalaxyDriver {
     /**
      * Method to set the handler for incoming messages
      *
-     * If a message was received, the Driver implementation must call {@link MessageHandler#received(String, String)}
+     * If a message was received, the Driver implementation must call {@link MessageHandler#received(de.dev_kiste.galaxy.messaging.GalaxyMessage)}
      * to consume the incoming message
      *
      * @param handler The Handler to use

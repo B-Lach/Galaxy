@@ -3,6 +3,7 @@ package de.dev_kiste.galaxy.driver;
 import com.fazecast.jSerialComm.SerialPort;
 
 import com.sun.istack.internal.NotNull;
+import de.dev_kiste.galaxy.messaging.GalaxyMessage;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
 import de.dev_kiste.galaxy.messaging.MessageLogger;
 //import de.dev_kiste.galaxy.security.AccessControlHandler;
@@ -284,7 +285,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
             String source = header[1];
             String payload = message.substring(11);
 
-            messageHandler.received(payload, header[1]);
+            messageHandler.received(new GalaxyMessage(payload, source));
         }
     }
 

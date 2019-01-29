@@ -9,8 +9,7 @@ public interface MessageHandler {
     /**
      * Method to notify about incoming messages
      *
-     * @param payload The payload received
-     * @param source The sender of the message - typically the MAC address
+     * @param message The received message object
      */
-    void received(String payload, String source);
+    void received(GalaxyMessage message);
 }
