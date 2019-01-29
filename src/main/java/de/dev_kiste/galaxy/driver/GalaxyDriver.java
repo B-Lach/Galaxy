@@ -35,22 +35,22 @@ public interface GalaxyDriver {
     /**
      * Method to set the handler for incoming messages
      *
-     * If a message was received, the Driver implementation must call {@link MessageHandler#receivedMessage(String, String)}
+     * If a message was received, the Driver implementation must call {@link MessageHandler#received(String, String)}
      * to consume the incoming message
      *
      * @param handler The Handler to use
      */
     void setMessageHandler(MessageHandler handler);
 
-    /**
-     * Method to set the Access Control Handler
-     *
-     * If a new connection was requested or a new message was received one must ask the Access Control Handler first before
-     * delegating the request to the next stage.
-     *
-     * @param handler The handler to use
-     */
-    void setAccessControlHandler(AccessControlHandler handler);
+//    /**
+//     * Method to set the Access Control Handler
+//     *
+//     * If a new connection was requested or a new message was received one must ask the Access Control Handler first before
+//     * delegating the request to the next stage.
+//     *
+//     * @param handler The handler to use
+//     */
+//    void setAccessControlHandler(AccessControlHandler handler);
 
     /**
      * Method to get the maximum size in bytes a single payload can have
