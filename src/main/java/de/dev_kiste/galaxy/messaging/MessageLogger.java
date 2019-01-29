@@ -8,7 +8,7 @@ package de.dev_kiste.galaxy.messaging;
  */
 public class MessageLogger implements MessageHandler{
     @Override
-    public void receivedMessage(String msg, String source) {
-        System.out.println("Received new message from " + source + " :\n" + msg);
+    public void received(String payload, String source) {
+        System.out.println("Received new message from " + source + " :\n" + payload);
     }
 }

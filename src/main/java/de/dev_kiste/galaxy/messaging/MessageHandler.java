@@ -9,8 +9,8 @@ public interface MessageHandler {
     /**
      * Method to notify about incoming messages
      *
-     * @param msg The message received
+     * @param payload The payload received
      * @param source The sender of the message - typically the MAC address
      */
-    void receivedMessage(String msg, String source);
+    void received(String payload, String source);
 }
