@@ -14,9 +14,9 @@ import java.util.Optional;
  * @author Benny Lach
  */
 public class GalaxyNodeBuilder {
-    private Optional<GalaxyDriver> driver = Optional.ofNullable(null);
-    private Optional<MessageHandler> messageHandler = Optional.ofNullable(null);
-    private Optional<AccessControlHandler> accessControlHandler = Optional.ofNullable(null);
+    private Optional<GalaxyDriver> driver = Optional.empty();
+    private Optional<MessageHandler> messageHandler = Optional.empty();
+    private Optional<AccessControlHandler> accessControlHandler = Optional.empty();
     private ArrayList<GalaxyMiddleware> middlewares = new ArrayList();
 
     private boolean isDebug = false;
