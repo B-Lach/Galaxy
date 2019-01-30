@@ -3,7 +3,6 @@ package de.dev_kiste.galaxy.client;
 import de.dev_kiste.galaxy.client.middleware.GalaxyMiddleware;
 import de.dev_kiste.galaxy.driver.GalaxyDriver;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
-import de.dev_kiste.galaxy.security.AccessControlHandler;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -16,7 +15,6 @@ import java.util.Optional;
 public class GalaxyNodeBuilder {
     private Optional<GalaxyDriver> driver = Optional.empty();
     private Optional<MessageHandler> messageHandler = Optional.empty();
-    private Optional<AccessControlHandler> accessControlHandler = Optional.empty();
     private ArrayList<GalaxyMiddleware> middlewares = new ArrayList();
 
     private boolean isDebug = false;
@@ -29,18 +27,6 @@ public class GalaxyNodeBuilder {
      */
     public GalaxyNodeBuilder setDriver(GalaxyDriver driver) {
         this.driver = Optional.ofNullable(driver);
-
-        return this;
-    }
-
-    /**
-     * Method th set the used {@link AccessControlHandler} object
-     *
-     * @param accessControlHandler The used access handler implementation
-     * @return Updated GalaxyNodeBuilderInterface object
-     */
-    public GalaxyNodeBuilder setAccessControlHandler(AccessControlHandler accessControlHandler) {
-        this.accessControlHandler = Optional.ofNullable(accessControlHandler);
 
         return this;
     }
@@ -89,15 +75,6 @@ public class GalaxyNodeBuilder {
      */
     Optional<MessageHandler> getMessageHandler() {
         return messageHandler;
-    }
-
-    /**
-     * Package private Getter for the {@link AccessControlHandler} object
-     *
-     * @return the used access handler
-     */
-    Optional<AccessControlHandler> getAccessControlHandler() {
-        return accessControlHandler;
     }
 
     /**
