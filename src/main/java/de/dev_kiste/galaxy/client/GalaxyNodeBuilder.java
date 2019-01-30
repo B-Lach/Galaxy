@@ -19,6 +19,8 @@ public class GalaxyNodeBuilder {
     private Optional<AccessControlHandler> accessControlHandler = Optional.ofNullable(null);
     private ArrayList<GalaxyMiddleware> middlewares = new ArrayList();
 
+    private boolean isDebug = false;
+
     /**
      * Method to set the used {@link GalaxyDriver} object
      *
@@ -61,6 +63,12 @@ public class GalaxyNodeBuilder {
         return this;
     }
 
+    public GalaxyNodeBuilder isDebug(boolean isDebug) {
+        this.isDebug = isDebug;
+
+        return this;
+    }
+
     public GalaxyNode build() {
         return new GalaxyNode(this);
     }
@@ -97,4 +105,8 @@ public class GalaxyNodeBuilder {
      * @return defined middlewares
      */
     ArrayList<GalaxyMiddleware> getMiddlewares() { return middlewares; }
+
+    boolean getIsDebug() {
+        return isDebug;
+    }
 }
