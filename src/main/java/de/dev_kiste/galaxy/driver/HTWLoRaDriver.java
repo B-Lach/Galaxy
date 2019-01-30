@@ -2,13 +2,9 @@ package de.dev_kiste.galaxy.driver;
 
 import com.fazecast.jSerialComm.SerialPort;
 
-import com.sun.istack.internal.NotNull;
 import de.dev_kiste.galaxy.messaging.GalaxyMessage;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
 import de.dev_kiste.galaxy.messaging.MessageLogger;
-//import de.dev_kiste.galaxy.security.AccessControlHandler;
-//import de.dev_kiste.galaxy.security.AccessStatus;
-//import de.dev_kiste.galaxy.security.AllowAllAccessControlHandler;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -36,7 +32,6 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
     volatile private ArrayList<CallbackContainer> callbackStack = new ArrayList<>();
     private SerialPort port;
-    volatile private String serialResponse = "";
 
     volatile private MessageHandler messageHandler = new MessageLogger();
     volatile private boolean isConnecting = false;
@@ -245,7 +240,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
         t.start();
     }
 
-    private void handleIncomingMessage(@NotNull String message) {
+    private void handleIncomingMessage(String message) {
         if(message.startsWith("LR")) {
             handleRemoteMessage(message);
         } else if(message.startsWith("AT")){
