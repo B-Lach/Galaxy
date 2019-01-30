@@ -140,8 +140,18 @@ public class GalaxyNode {
     }
 
     /**
+     * Returns the limit a message to be send must not exceed
+     *
+     * @return max. message length in bytes
+     */
+    public int getMaximumMessageSize() {
+        return driver.map(driver -> driver.getMaximumPayloadSize())
+                .orElse(-1);
+    }
+    /**
      * Method to send a message to a specific host
      * - The Node must be bootstrapped {@link GalaxyNode#bootstrap} before sending is working
+     * - The size of the message must not exceed the maximum allowed payload size
      *
      * @param msg The payload to send
      * @param receiver The destination address
@@ -151,7 +161,6 @@ public class GalaxyNode {
         if(!didBootstrap) {
             return CompletableFuture.completedFuture(false);
         }
-        // TODO: Compare message length with max payload size and split into multiple messages if needed
         return driver.map(driver -> driver.sendMessage(msg, receiver))
                 .orElse(CompletableFuture.completedFuture(false));
     }
@@ -159,6 +168,7 @@ public class GalaxyNode {
     /**
      * Method to send a broadcast message
      * - The Node must be bootstrapped {@link GalaxyNode#bootstrap} before sending is working
+     * - The size of the message must not exceed the maximum allowed payload size
      *
      * @param msg The payload to send
      * @return Future indicating if the message was send
@@ -167,7 +177,6 @@ public class GalaxyNode {
         if(!didBootstrap) {
             return CompletableFuture.completedFuture(false);
         }
-        // TODO: Compare message length with max payload size and split into multiple messages if needed
         return driver.map(driver -> driver.sendBroadcastMessage(msg))
                 .orElse(CompletableFuture.completedFuture(false));
     }
