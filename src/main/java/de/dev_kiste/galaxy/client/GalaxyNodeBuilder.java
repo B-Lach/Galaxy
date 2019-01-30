@@ -63,8 +63,8 @@ public class GalaxyNodeBuilder {
         return this;
     }
 
-    public GalaxyNodeBuilder isDebug(boolean isDebug) {
-        this.isDebug = isDebug;
+    public GalaxyNodeBuilder isDebug() {
+        this.isDebug = true;
 
         return this;
     }
