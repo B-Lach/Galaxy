@@ -282,7 +282,7 @@ public class GalaxyNode {
                     logIfNeeded(Level.INFO, "New message will be forwarded to registered message handler");
 
                     handler.received(result);
-                    return null;
+                    return Optional.empty();
                 }).orElseGet(() -> {
                     logIfNeeded(Level.INFO, "Can not forward message because no message handler was registered");
 
