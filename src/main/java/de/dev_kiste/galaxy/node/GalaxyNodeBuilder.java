@@ -1,6 +1,6 @@
-package de.dev_kiste.galaxy.client;
+package de.dev_kiste.galaxy.node;
 
-import de.dev_kiste.galaxy.client.middleware.GalaxyMiddleware;
+import de.dev_kiste.galaxy.node.middleware.GalaxyMiddleware;
 import de.dev_kiste.galaxy.driver.GalaxyDriver;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
 

@@ -1,4 +1,4 @@
-package de.dev_kiste.galaxy.client.middleware;
+package de.dev_kiste.galaxy.node.middleware;
 
 import de.dev_kiste.galaxy.messaging.GalaxyMessage;
 

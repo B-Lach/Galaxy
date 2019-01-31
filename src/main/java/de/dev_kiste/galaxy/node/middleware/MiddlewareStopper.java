@@ -1,4 +1,4 @@
-package de.dev_kiste.galaxy.client.middleware;
+package de.dev_kiste.galaxy.node.middleware;
 
 /**
  * MiddlewareStopper interface used for stopping middleware execution
