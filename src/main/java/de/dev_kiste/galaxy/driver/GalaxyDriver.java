@@ -41,16 +41,6 @@ public interface GalaxyDriver {
      */
     void setMessageHandler(MessageHandler handler);
 
-//    /**
-//     * Method to set the Access Control Handler
-//     *
-//     * If a new connection was requested or a new message was received one must ask the Access Control Handler first before
-//     * delegating the request to the next stage.
-//     *
-//     * @param handler The handler to use
-//     */
-//    void setAccessControlHandler(AccessControlHandler handler);
-
     /**
      * Method to get the maximum size in bytes a single payload can have
      *
