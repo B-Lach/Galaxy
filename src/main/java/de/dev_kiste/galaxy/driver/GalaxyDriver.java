@@ -1,7 +1,6 @@
 package de.dev_kiste.galaxy.driver;
 
 import de.dev_kiste.galaxy.messaging.MessageHandler;
-import de.dev_kiste.galaxy.security.AccessControlHandler;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -35,22 +34,12 @@ public interface GalaxyDriver {
     /**
      * Method to set the handler for incoming messages
      *
-     * If a message was received, the Driver implementation must call {@link MessageHandler#receivedMessage(String, String)}
+     * If a message was received, the Driver implementation must call {@link MessageHandler#received(de.dev_kiste.galaxy.messaging.GalaxyMessage)}
      * to consume the incoming message
      *
      * @param handler The Handler to use
      */
     void setMessageHandler(MessageHandler handler);
-
-    /**
-     * Method to set the Access Control Handler
-     *
-     * If a new connection was requested or a new message was received one must ask the Access Control Handler first before
-     * delegating the request to the next stage.
-     *
-     * @param handler The handler to use
-     */
-    void setAccessControlHandler(AccessControlHandler handler);
 
     /**
      * Method to get the maximum size in bytes a single payload can have

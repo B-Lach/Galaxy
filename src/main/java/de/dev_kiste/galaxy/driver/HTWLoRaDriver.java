@@ -2,12 +2,9 @@ package de.dev_kiste.galaxy.driver;
 
 import com.fazecast.jSerialComm.SerialPort;
 
-import com.sun.istack.internal.NotNull;
+import de.dev_kiste.galaxy.messaging.GalaxyMessage;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
 import de.dev_kiste.galaxy.messaging.MessageLogger;
-import de.dev_kiste.galaxy.security.AccessControlHandler;
-import de.dev_kiste.galaxy.security.AccessStatus;
-import de.dev_kiste.galaxy.security.AllowAllAccessControlHandler;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -35,10 +32,8 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
     volatile private ArrayList<CallbackContainer> callbackStack = new ArrayList<>();
     private SerialPort port;
-    volatile private String serialResponse = "";
 
     volatile private MessageHandler messageHandler = new MessageLogger();
-    volatile private AccessControlHandler accessControlHandler = new AllowAllAccessControlHandler();
     volatile private boolean isConnecting = false;
     volatile private boolean shouldRead = true;
     /**
@@ -102,13 +97,6 @@ public class HTWLoRaDriver implements GalaxyDriver {
     public void setMessageHandler(MessageHandler handler) {
         if(messageHandler != null) {
             messageHandler = handler;
-        }
-    }
-
-    @Override
-    public void setAccessControlHandler(AccessControlHandler handler) {
-        if(handler != null) {
-            accessControlHandler = handler;
         }
     }
 
@@ -252,7 +240,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
         t.start();
     }
 
-    private void handleIncomingMessage(@NotNull String message) {
+    private void handleIncomingMessage(String message) {
         if(message.startsWith("LR")) {
             handleRemoteMessage(message);
         } else if(message.startsWith("AT")){
@@ -292,15 +280,8 @@ public class HTWLoRaDriver implements GalaxyDriver {
             String source = header[1];
             String payload = message.substring(11);
 
-            if(isValidSource(source)) {
-                messageHandler.receivedMessage(payload, header[1]);
-            }
+            messageHandler.received(new GalaxyMessage(payload, source));
         }
-    }
-
-    private boolean isValidSource(String source) {
-        return accessControlHandler.getAccessStatus(source) == AccessStatus.AUTHORIZED ||
-                accessControlHandler.determineAuthorizationStatus(source) == AccessStatus.AUTHORIZED;
     }
 
     private void handleModuleMessage(String message) {

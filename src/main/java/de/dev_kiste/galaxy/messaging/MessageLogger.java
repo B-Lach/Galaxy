@@ -6,9 +6,9 @@ package de.dev_kiste.galaxy.messaging;
  * Reference Implementation of {@link MessageHandler} logging reveived messages to {@link System#out}
  *
  */
-public class MessageLogger implements MessageHandler{
+public class MessageLogger implements MessageHandler {
     @Override
-    public void receivedMessage(String msg, String source) {
-        System.out.println("Received new message from " + source + " :\n" + msg);
+    public void received(GalaxyMessage message) {
+        System.out.println("Received new message from " + message.getSource() + " :\n" + message.getPayload());
     }
 }
