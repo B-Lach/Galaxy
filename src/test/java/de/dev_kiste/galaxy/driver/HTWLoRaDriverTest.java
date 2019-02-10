@@ -12,51 +12,51 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Unit tests for HTWLoRaDriver
  */
-public class HTWLoRaDriverTest {
+ class HTWLoRaDriverTest {
     private String portDescriptor = "cu.SLAB_USBtoUART";
     private HTWLoRaDriver testDriver;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         testDriver = new HTWLoRaDriver(portDescriptor);
     }
 
     @AfterEach
-    public void deinit() {
+    void deinit() {
         testDriver.disconnect();
     }
 
     @Test
-    public void initWithNullPortDescriptorShouldFail() {
+    void initWithNullPortDescriptorShouldFail() {
         assertThrows(IllegalArgumentException.class, () -> new HTWLoRaDriver(null));
     }
 
     @Test
-    public void initWitEmptyPortDescriptorShouldFail() {
+    void initWitEmptyPortDescriptorShouldFail() {
         assertThrows(IllegalArgumentException.class, () -> new HTWLoRaDriver(""));
 
     }
 
     @Test
-    public void initWitNonEmptyPortDescriptorShouldNotFail() {
+    void initWitNonEmptyPortDescriptorShouldNotFail() {
         assertAll(() -> new HTWLoRaDriver(portDescriptor));
 
     }
 
     @Test
-    public void connectWithInvalidDescriptorShouldReturnFalse() {
+    void connectWithInvalidDescriptorShouldReturnFalse() {
         HTWLoRaDriver driver = new HTWLoRaDriver("foo");
 
         assertAll(() -> assertFalse(driver.connect().get()));
     }
 
     @Test
-    public void connectWithValidDescriptorShouldReturnTrue() {
+    void connectWithValidDescriptorShouldReturnTrue() {
         assertAll(() -> assertTrue(testDriver.connect().get()));
     }
 
     @Test
-    public void connectUsedPortShouldReturnFalse() {
+    void connectUsedPortShouldReturnFalse() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> {
@@ -67,12 +67,12 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void disconnectNotOpenedPortShouldReturnTrue() {
+    void disconnectNotOpenedPortShouldReturnTrue() {
         assertAll(() -> assertTrue(testDriver.disconnect().get()));
     }
 
     @Test
-    public void disconnectOpenedPortShouldReturnTrue() {
+   void disconnectOpenedPortShouldReturnTrue() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertTrue(testDriver.disconnect().get())
@@ -81,21 +81,21 @@ public class HTWLoRaDriverTest {
 
 
     @Test
-    public void testSupportedChannels() {
+    void testSupportedChannels() {
         HTWLoRaDriver driver = new HTWLoRaDriver(portDescriptor);
         int[] supportedChannels = driver.getSupportedChannels();
 
-        assertTrue(0 == supportedChannels.length);
+        assertEquals(0, supportedChannels.length);
     }
 
     @Test
-    public void setChannelWhileNotConnectedShouldFail() {
+    void setChannelWhileNotConnectedShouldFail() {
         assertAll(() -> assertFalse(testDriver.setChannel(20).get()));
 
     }
 
     @Test
-    public void setNegativeChannelShouldReturnFalse() {
+    void setNegativeChannelShouldReturnFalse() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertFalse(testDriver.setChannel(-10).get())
@@ -103,7 +103,7 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void setPositiveChannelShouldReturnFalse() {
+    void setPositiveChannelShouldReturnFalse() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertFalse(testDriver.setChannel(10).get())
@@ -111,7 +111,7 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void setNullAddressShouldReturnFalse() {
+    void setNullAddressShouldReturnFalse() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertFalse(testDriver.setAddress(null).get())
@@ -119,7 +119,7 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void setValidAddressShouldReturnTrue() {
+    void setValidAddressShouldReturnTrue() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertTrue(testDriver.setAddress("0010").get()),
@@ -128,22 +128,22 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void sendMessageWithNullPayloadShouldThrow() {
+    void sendMessageWithNullPayloadShouldThrow() {
         assertThrows(IllegalArgumentException.class, () -> assertFalse(testDriver.sendMessage(null, "FFFF").get()));
     }
 
     @Test
-    public void sendMessageWithNullReceiverShouldThrow() {
+    void sendMessageWithNullReceiverShouldThrow() {
         assertThrows(IllegalArgumentException.class, () -> assertFalse(testDriver.sendMessage("Foo", null).get()));
     }
 
     @Test
-    public void sendMessageWithoutConnectShouldThrow() {
+    void sendMessageWithoutConnectShouldThrow() {
         assertThrows(IllegalStateException.class, () -> assertFalse(testDriver.sendMessage("Ping", "FFFF").get()));
     }
 
     @Test
-    public void sendValidMessageShouldReturnTrue() {
+    void sendValidMessageShouldReturnTrue() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertTrue(testDriver.sendMessage("Foo", "0010").get())
@@ -151,17 +151,17 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void sendBroadcastWithNullPayloadShouldThrow() {
+    void sendBroadcastWithNullPayloadShouldThrow() {
         assertThrows(IllegalArgumentException.class, () -> assertFalse(testDriver.sendBroadcastMessage(null).get()));
     }
 
     @Test
-    public void sendBroadcastWithoutConnectShouldThrow() {
+    void sendBroadcastWithoutConnectShouldThrow() {
         assertThrows(IllegalStateException.class, () -> assertFalse(testDriver.sendBroadcastMessage("Ping").get()));
     }
 
     @Test
-    public void sendValidBroadcastShouldReturnTrue() {
+    void sendValidBroadcastShouldReturnTrue() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertTrue(testDriver.sendBroadcastMessage("Foo").get())
@@ -169,7 +169,7 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void doubleConnectShouldReturnTrue() {
+    void doubleConnectShouldReturnTrue() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertTrue(testDriver.connect().get())
@@ -177,12 +177,12 @@ public class HTWLoRaDriverTest {
     }
 
     @Test
-    public void rebootNotConnectedPortShouldReturnFalse() {
+    void rebootNotConnectedPortShouldReturnFalse() {
         assertAll(() -> assertFalse(testDriver.reboot().get()));
     }
 
     @Test
-    public void rebootConnectedPortShouldReturnTrue() {
+    void rebootConnectedPortShouldReturnTrue() {
         assertAll(
                 () -> assertTrue(testDriver.connect().get()),
                 () -> assertTrue(testDriver.reboot().get())
