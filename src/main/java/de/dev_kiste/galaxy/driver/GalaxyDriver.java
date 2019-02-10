@@ -31,6 +31,28 @@ public interface GalaxyDriver {
      */
     CompletableFuture<Boolean> sendBroadcastMessage(String msg) throws IllegalArgumentException;
 
+
+    /**
+     * Method to send the given <code>byte[]</code> payload to a given receiver
+     *
+     * @param payload The payload to send
+     * @param receiver The receiver - typically the MAC address
+     * @throws IllegalArgumentException if the payload or the receiver is null or the payload exceeds the max supported payload size
+     *
+     * @return CompletableFuture
+     */
+    CompletableFuture<Boolean> sendPayload(byte[] payload, String receiver) throws IllegalArgumentException;
+
+    /**
+     * Method to broadcast the given <code>byte[]</code> payload to all connected clients
+     *
+     * @param payload The message to send
+     * @throws IllegalArgumentException if the payload is null or exceeds the max supported payload size
+     *
+     * @return CompletableFuture
+     */
+    CompletableFuture<Boolean> sendBroadcastPayload(byte[] payload) throws IllegalArgumentException;
+
     /**
      * Method to set the handler for incoming messages
      *

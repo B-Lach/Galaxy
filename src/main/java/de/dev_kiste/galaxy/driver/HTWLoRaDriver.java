@@ -51,46 +51,38 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
     @Override
     public CompletableFuture<Boolean> sendMessage(String msg, String receiver) throws IllegalArgumentException {
+
         if(msg == null || receiver == null) {
             throw new IllegalArgumentException("Message and received must not be null!");
         }
-        int length = msg.getBytes().length;
-
-        if(!sendSerialMessage("AT+SEND=" + length, false)) {
-            return CompletableFuture.completedFuture(false);
-        }
-        CompletableFuture<Boolean> future = new CompletableFuture();
-        CompletableFuture<Boolean> sizeFuture = new CompletableFuture();
-
-        sizeFuture.thenCompose((didSetSize) -> {
-            if (!didSetSize || !sendSerialMessage(msg, false)) {
-                return CompletableFuture.completedFuture("AT,NOSENDING");
-            }
-            CompletableFuture<String> sendFuture = new CompletableFuture();
-            HTWLoRaDriver.this.callbackStack.add(new CallbackContainer(sendFuture, String.class));
-
-            return sendFuture;
-        }).thenCompose((startSendMessage) -> {
-            if (!startSendMessage.equals("AT,SENDING")) {
-                return CompletableFuture.completedFuture("AT,NOTSENDED");
-            }
-            CompletableFuture<String> didSendFuture = new CompletableFuture();
-            callbackStack.add(new CallbackContainer(didSendFuture, String.class));
-
-            return didSendFuture;
-        }).thenApply((sendedMessage) -> {
-            future.complete(sendedMessage.equals("AT,SENDED"));
-
-            return null;
-        });
-        callbackStack.add(new CallbackContainer(sizeFuture, Boolean.class));
-
-        return future;
+        return sendPayload(msg.getBytes(StandardCharsets.UTF_8), receiver);
     }
 
     @Override
     public CompletableFuture<Boolean> sendBroadcastMessage(String msg) throws IllegalArgumentException {
         return sendMessage(msg, "FFFF");
+    }
+
+    @Override
+    public CompletableFuture<Boolean> sendPayload(byte[] payload, String receiver) throws IllegalArgumentException {
+        if(payload == null || receiver == null) {
+            throw new IllegalArgumentException("Payload and receiver must not be null!");
+        }
+        if(payload.length > getMaximumPayloadSize()) {
+            throw new IllegalArgumentException("Payload must not exceed the maximum supported payload size!");
+        }
+        return setDestinationAddress(receiver)
+                .thenCompose((didSet) -> {
+                    if(!didSet) {
+                        return CompletableFuture.completedFuture(false);
+                    }
+                    return _sendPayload(payload);
+                });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> sendBroadcastPayload(byte[] payload) throws IllegalArgumentException {
+        return sendPayload(payload, "FFFF");
     }
 
     @Override
@@ -107,7 +99,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
     @Override
     public CompletableFuture<String> getAddress() {
-        if(!sendSerialMessage("AT+ADDR?", false)) {
+        if(!sendSerialPayload("AT+ADDR?".getBytes(StandardCharsets.UTF_8), false)) {
             return CompletableFuture.completedFuture("");
         }
 
@@ -135,7 +127,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
         if(address == null) {
             return CompletableFuture.completedFuture(false);
         }
-        if(!sendSerialMessage("AT+ADDR=" + address, false)) {
+        if(!sendSerialPayload(("AT+ADDR=" + address).getBytes(StandardCharsets.UTF_8), false)) {
             return CompletableFuture.completedFuture(false);
         }
         CompletableFuture<Boolean> future = new CompletableFuture();
@@ -195,7 +187,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
                 return CompletableFuture.completedFuture(false);
             }
-            sendSerialMessage("AT+RX", true);
+            sendSerialPayload("AT+RX".getBytes(StandardCharsets.UTF_8), true);
 
             return switchedModeFuture;
         }).thenCompose((didSwitchMode) -> {
@@ -205,7 +197,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
             return null;
         });
         isConnecting = true;
-        sendSerialMessage("AT+CFG=" + configString, true);
+        sendSerialPayload(("AT+CFG=" + configString).getBytes(StandardCharsets.UTF_8), true);
 
         return future;
     }
@@ -262,12 +254,61 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
     @Override
     public CompletableFuture<Boolean> reboot() {
-        if(port == null || !port.isOpen() || !sendSerialMessage("AT+RST", false)) {
+        if(port == null || !port.isOpen() || !sendSerialPayload("AT+RST".getBytes(StandardCharsets.UTF_8), false)) {
             return CompletableFuture.completedFuture(false);
         }
         CompletableFuture<Boolean> future = new CompletableFuture();
 
         callbackStack.add(new CallbackContainer(future, Boolean.class));
+
+        return future;
+    }
+
+    private CompletableFuture<Boolean> setDestinationAddress(String address) {
+        if (address == null) {
+            return CompletableFuture.completedFuture(false);
+        }
+        if(!sendSerialPayload(("AT+DEST=" + address).getBytes(StandardCharsets.UTF_8), false)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        CompletableFuture<Boolean> future = new CompletableFuture();
+
+        callbackStack.add(new CallbackContainer(future, Boolean.class));
+
+        return future;
+    }
+
+    private CompletableFuture<Boolean> _sendPayload(byte[] payload) {
+        //int length = payload.length;
+
+        if(!sendSerialPayload(("AT+SEND=" + payload.length).getBytes(StandardCharsets.UTF_8), false)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        CompletableFuture<Boolean> future = new CompletableFuture();
+        CompletableFuture<Boolean> sizeFuture = new CompletableFuture();
+
+        sizeFuture.thenCompose((didSetSize) -> {
+            if (!didSetSize || !sendSerialPayload(payload, false)) {
+                return CompletableFuture.completedFuture("AT,NOSENDING");
+            }
+            CompletableFuture<String> sendFuture = new CompletableFuture();
+            HTWLoRaDriver.this.callbackStack.add(new CallbackContainer(sendFuture, String.class));
+
+            return sendFuture;
+        }).thenCompose((startSendMessage) -> {
+            if (!startSendMessage.equals("AT,SENDING")) {
+                return CompletableFuture.completedFuture("AT,NOTSENDED");
+            }
+            CompletableFuture<String> didSendFuture = new CompletableFuture();
+            callbackStack.add(new CallbackContainer(didSendFuture, String.class));
+
+            return didSendFuture;
+        }).thenApply((sendedMessage) -> {
+            future.complete(sendedMessage.equals("AT,SENDED"));
+
+            return null;
+        });
+        callbackStack.add(new CallbackContainer(sizeFuture, Boolean.class));
 
         return future;
     }
@@ -309,7 +350,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
         }
     }
 
-    private boolean sendSerialMessage(String msg, boolean isSetupMessage) throws IllegalStateException {
+    private boolean sendSerialPayload(byte[] payload, boolean isSetupMessage) throws IllegalStateException {
         if (port == null || !port.isOpen()) {
             throw new IllegalStateException("Port is not connected");
         }
@@ -317,9 +358,13 @@ public class HTWLoRaDriver implements GalaxyDriver {
         if(!isSetupMessage && isConnecting) {
             return false;
         }
+        byte[] end = "\r\n".getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = new byte[payload.length + end.length];
 
-        byte[] byteMsg = (msg + "\r\n").getBytes(StandardCharsets.UTF_8);
-        port.writeBytes(byteMsg, byteMsg.length);
+        System.arraycopy(payload, 0, bytes, 0, payload.length);
+        System.arraycopy(end, 0, bytes, payload.length, end.length);
+
+        port.writeBytes(bytes, bytes.length);
 
         return true;
     }
