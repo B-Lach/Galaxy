@@ -215,8 +215,10 @@ public class GalaxyNode {
                     return -1;
                 });
     }
+
     /**
      * Method to send a message to a specific host
+     *
      * - The Node must be bootstrapped {@link GalaxyNode#bootstrap} before sending is working
      * - The size of the message must not exceed the maximum allowed payload size
      *
@@ -244,6 +246,35 @@ public class GalaxyNode {
     }
 
     /**
+     * Method to send the given bytes to a specific host
+     *
+     * - The Node must be bootstrapped {@link GalaxyNode#bootstrap} before sending is working
+     * - The size of the payload must not exceed the maximum allowed payload size
+     *
+     * @param payload The payload to send
+     * @param receiver The destination address
+     * @return Future indicating if the message was send
+     */
+    public CompletableFuture<Boolean> sendPayload(final byte[] payload, final String receiver) {
+        if(!didBootstrap) {
+            logIfNeeded(Level.WARNING, "GalaxyNode has not been bootstrapped - sending messages not working");
+
+            return CompletableFuture.completedFuture(false);
+        }
+        return driver.map(driver -> driver.sendPayload(payload, receiver))
+                .map(future -> future.thenCompose(didSend -> {
+                    logIfNeeded(Level.INFO, "Request to send message returned - did send: " + didSend);
+
+                    return CompletableFuture.completedFuture(didSend);
+                }))
+                .orElseGet(() -> {
+                    logIfNeeded(Level.WARNING, "GalaxyDriver instance is missing");
+
+                    return CompletableFuture.completedFuture(false);
+                });
+    }
+
+    /**
      * Method to send a broadcast message
      * - The Node must be bootstrapped {@link GalaxyNode#bootstrap} before sending is working
      * - The size of the message must not exceed the maximum allowed payload size
@@ -258,6 +289,33 @@ public class GalaxyNode {
             return CompletableFuture.completedFuture(false);
         }
         return driver.map(driver -> driver.sendBroadcastMessage(msg))
+                .map(future -> future.thenCompose(didSend -> {
+                    logIfNeeded(Level.INFO, "Request to send broadcast returned - did send: " + didSend);
+
+                    return CompletableFuture.completedFuture(didSend);
+                }))
+                .orElseGet(() -> {
+                    logIfNeeded(Level.WARNING, "GalaxyDriver instance is missing");
+
+                    return CompletableFuture.completedFuture(false);
+                });
+    }
+
+    /**
+     * Method to send the given bytes as broadcast
+     * - The Node must be bootstrapped {@link GalaxyNode#bootstrap} before sending is working
+     * - The size of the payload must not exceed the maximum allowed payload size
+     *
+     * @param payload The payload to send
+     * @return Future indicating if the message was send
+     */
+    public CompletableFuture<Boolean> sendBroadcastPayload(final byte[] payload) {
+        if(!didBootstrap) {
+            logIfNeeded(Level.WARNING, "GalaxyNode has not been bootstrapped  - sending messages not working");
+
+            return CompletableFuture.completedFuture(false);
+        }
+        return driver.map(driver -> driver.sendBroadcastPayload(payload))
                 .map(future -> future.thenCompose(didSend -> {
                     logIfNeeded(Level.INFO, "Request to send broadcast returned - did send: " + didSend);
 
