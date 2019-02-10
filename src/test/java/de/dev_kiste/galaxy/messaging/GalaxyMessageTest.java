@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Benny Lach
  */
-public class GalaxyMessageTest {
+class GalaxyMessageTest {
 
     @Test
-    public void testConstructor() {
+    void testConstructor() {
         String payload = "foo";
         String source = "bar";
 
