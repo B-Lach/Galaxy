@@ -6,7 +6,7 @@
 
     <groupId>de.dev_kiste</groupId>
     <artifactId>galaxy</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
     <name>galaxy</name>
     <url>https://github.com/B-Lach/Galaxy</url>
