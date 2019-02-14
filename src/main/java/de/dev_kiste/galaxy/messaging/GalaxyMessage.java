@@ -6,7 +6,7 @@ package de.dev_kiste.galaxy.messaging;
  * @author Benny Lach
  */
 public class GalaxyMessage {
-    private String payload;
+    private byte[] payload;
     private String source;
 
     /**
@@ -14,16 +14,16 @@ public class GalaxyMessage {
      * @param payload message payload
      * @param source message source
      */
-    public GalaxyMessage(String payload, String source) {
-        this.payload = payload;
+    public GalaxyMessage(byte[] payload, String source) {
         this.source = source;
+        this.payload = payload.clone();
     }
 
     /**
      * Method to get the payload
      * @return payload
      */
-    public String getPayload() {
+    public byte[] getPayload() {
         return payload;
     }
 

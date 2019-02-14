@@ -16,6 +16,8 @@ import java.util.concurrent.CompletableFuture;
  * GalaxyDriver implementation for a LoRa Device
  */
 public class HTWLoRaDriver implements GalaxyDriver {
+    private final static String MESSAGE_END = "\r\n";
+    private final static int HEADER_LENGTH = 11;
 
     private class CallbackContainer<T> {
         private CompletableFuture<T> future;
@@ -205,7 +207,8 @@ public class HTWLoRaDriver implements GalaxyDriver {
     private void startReading() {
         shouldRead = true;
         Thread t = new Thread(() -> {
-            String message = "";
+            byte[] data = new byte[0];
+
             try {
                 while (HTWLoRaDriver.this.shouldRead) {
                     while (port.bytesAvailable() <= 0) {
@@ -214,31 +217,54 @@ public class HTWLoRaDriver implements GalaxyDriver {
 
                     byte[] readBuffer = new byte[port.bytesAvailable()];
                     port.readBytes(readBuffer, readBuffer.length);
-                    message += new String(readBuffer, StandardCharsets.UTF_8);
 
-                    if(message.endsWith("\r\n")) {
-                        String payload = message.replace("\r\n", "");
-                        message = "";
+                    if(data.length == 0) {
+                        data = readBuffer;
+                    } else {
+                        byte[] temp = new byte[data.length];
+                        System.arraycopy(data, 0, temp, 0, data.length);
 
-                        HTWLoRaDriver.this.handleIncomingMessage(payload);
+                        data = new byte[temp.length + readBuffer.length];
+                        System.arraycopy(temp, 0, data, 0, temp.length);
+                        System.arraycopy(readBuffer, 0, data, temp.length, readBuffer.length);
+
+                    }
+
+                    if(data.length > 2) {
+                        byte[] end = new byte[] { data[data.length - 2], data[data.length - 1]};
+                        String endString = new String(end, StandardCharsets.UTF_8);
+
+                        if(endString.equals(MESSAGE_END)) {
+                            byte[] cleaned = new byte[data.length - 2];
+
+                            System.arraycopy(data, 0, cleaned, 0, cleaned.length);
+                            data = new byte[0];
+
+                            handleIncomingMessage(cleaned);
+                        }
                     }
                 }
             } catch (Exception e) {
                 // TODO: Replace with logger
                 System.out.println("Reading failed: " + e);
-                message = "";
+
+                data = new byte[0];
             }
         });
         t.start();
     }
 
-    private void handleIncomingMessage(String message) {
-        if(message.startsWith("LR")) {
-            handleRemoteMessage(message);
-        } else if(message.startsWith("AT")){
-            handleModuleMessage(message);
-        } else {
-            System.out.println("Unknown message received: " + message);
+    private void handleIncomingMessage(byte[] data) {
+        String identifier = new String(new byte[]{data[0], data[1]});
+        switch (identifier) {
+            case "LR":
+                handleRemoteMessage(data);
+                break;
+            case "AT":
+                handleModuleMessage(data);
+                break;
+            default:
+                System.out.println("Unknown message identifier received: " + identifier);
         }
     }
 
@@ -313,21 +339,33 @@ public class HTWLoRaDriver implements GalaxyDriver {
         return future;
     }
 
-    private void handleRemoteMessage(String message) {
-        // Example Payload:  LR,0000,0A,Hallo Test
-        String[] header = message.substring(0, 9).split(",");
-        // TODO: Ok to ignore message if header size not valid?
+    private void handleRemoteMessage(byte[] data) {
+        // Example Payload:  LR,0000,0A,Hello Test
+        // LR -> Identifier for remote message
+        // 0000 -> Mac Address of the source
+        // 0A -> Payload Length as Hex
+        // Hallo Test -> Payload
+        byte[] headerData = new byte[11];
+        System.arraycopy(data, 0, headerData, 0, HEADER_LENGTH);
+
+        String[] header = new String(headerData, StandardCharsets.UTF_8)
+                .split(",");
+
         if(header.length == 3) {
             String source = header[1];
-            String payload = message.substring(11);
+
+            byte[] payload = new byte[data.length - HEADER_LENGTH];
+            System.arraycopy(data, HEADER_LENGTH, payload, 0, data.length - HEADER_LENGTH);
 
             messageHandler.received(new GalaxyMessage(payload, source));
         }
     }
 
-    private void handleModuleMessage(String message) {
+    private void handleModuleMessage(byte[] data) {
         if(callbackStack.size() > 0) {
             CallbackContainer container = callbackStack.remove(0);
+            String message = new String(data, StandardCharsets.UTF_8);
+
             switch (container.type.getSimpleName()) {
                 case "String":
                     container.future.complete(message);
