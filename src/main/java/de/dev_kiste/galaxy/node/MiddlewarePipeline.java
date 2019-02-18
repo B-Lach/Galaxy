@@ -61,10 +61,12 @@ class MiddlewarePipeline {
             return;
         }
         CompletableFuture<GalaxyMessage> f = new CompletableFuture<>();
-        middlewares.get(index).execute(message, (value) -> f.complete(value), () -> f.cancel(true));
+        middlewares.get(index).execute(message, value -> f.complete(value), () -> f.cancel(true));
 
         try {
-            f.thenAccept((message) -> {
+            f.thenAccept(message -> {
+                this.message = message;
+
                 _execute(callback, index + 1);
             }).get();
         } catch (Exception e) {}
