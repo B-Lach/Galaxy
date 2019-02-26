@@ -5,10 +5,13 @@ import com.fazecast.jSerialComm.SerialPort;
 import de.dev_kiste.galaxy.messaging.GalaxyMessage;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
 import de.dev_kiste.galaxy.messaging.MessageLogger;
+import de.dev_kiste.galaxy.util.GalaxyLogger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 /**
  * @author Benny Lach
@@ -18,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 public class HTWLoRaDriver implements GalaxyDriver {
     private final static String MESSAGE_END = "\r\n";
     private final static int HEADER_LENGTH = 11;
+    private Optional<GalaxyLogger> logger;
 
     private class CallbackContainer<T> {
         private CompletableFuture<T> future;
@@ -245,9 +249,7 @@ public class HTWLoRaDriver implements GalaxyDriver {
                     }
                 }
             } catch (Exception e) {
-                // TODO: Replace with logger
-                System.out.println("Reading failed: " + e);
-
+                logIfAvailable(Level.WARNING, "Reading failed: " + e.getMessage());
                 data = new byte[0];
             }
         });
@@ -288,6 +290,11 @@ public class HTWLoRaDriver implements GalaxyDriver {
         callbackStack.add(new CallbackContainer(future, Boolean.class));
 
         return future;
+    }
+
+    @Override
+    public void setLogger(GalaxyLogger logger) {
+        this.logger = Optional.ofNullable(logger);
     }
 
     private CompletableFuture<Boolean> setDestinationAddress(String address) {
@@ -379,12 +386,10 @@ public class HTWLoRaDriver implements GalaxyDriver {
                     container.future.complete(message.endsWith("OK"));
                     break;
                 default:
-                    // TODO: Use logging not System.out
-                    System.out.println("Unimplemented support type: " + container.type);
+                    logIfAvailable(Level.SEVERE, "Unimplemented support type " + container.type);
             }
         } else {
-            // TODO: Use logging not System.out
-            System.out.println("Not able to forward message -> no handler available");
+            logIfAvailable(Level.SEVERE, "No handler available: Not able to forward received message");
         }
     }
 
@@ -405,5 +410,10 @@ public class HTWLoRaDriver implements GalaxyDriver {
         port.writeBytes(bytes, bytes.length);
 
         return true;
+    }
+
+    private void logIfAvailable(Level lvl, String message) {
+        logger.ifPresent(l ->
+                l.log(lvl, "HTWLoRaDriver >> " + message));
     }
 }

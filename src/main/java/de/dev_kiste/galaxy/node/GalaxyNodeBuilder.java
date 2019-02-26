@@ -1,5 +1,6 @@
 package de.dev_kiste.galaxy.node;
 
+import de.dev_kiste.galaxy.util.GalaxyLogger;
 import de.dev_kiste.galaxy.node.middleware.GalaxyMiddleware;
 import de.dev_kiste.galaxy.driver.GalaxyDriver;
 import de.dev_kiste.galaxy.messaging.MessageHandler;
@@ -15,9 +16,8 @@ import java.util.Optional;
 public class GalaxyNodeBuilder {
     private Optional<GalaxyDriver> driver = Optional.empty();
     private Optional<MessageHandler> messageHandler = Optional.empty();
+    private Optional<GalaxyLogger> logger = Optional.empty();
     private ArrayList<GalaxyMiddleware> middlewares = new ArrayList();
-
-    private boolean isDebug = false;
 
     /**
      * Method to set the used {@link GalaxyDriver} object
@@ -43,14 +43,12 @@ public class GalaxyNodeBuilder {
         return this;
     }
 
-    public GalaxyNodeBuilder use(GalaxyMiddleware middleware) {
-        Optional.ofNullable(middleware).ifPresent(value -> middlewares.add(value));
-
-        return this;
+    public void setLogger(GalaxyLogger logger) {
+        this.logger = Optional.ofNullable(logger);
     }
 
-    public GalaxyNodeBuilder isDebug() {
-        this.isDebug = true;
+    public GalaxyNodeBuilder use(GalaxyMiddleware middleware) {
+        Optional.ofNullable(middleware).ifPresent(value -> middlewares.add(value));
 
         return this;
     }
@@ -83,7 +81,7 @@ public class GalaxyNodeBuilder {
      */
     ArrayList<GalaxyMiddleware> getMiddlewares() { return middlewares; }
 
-    boolean getIsDebug() {
-        return isDebug;
+    public Optional<GalaxyLogger> getLogger() {
+        return logger;
     }
 }

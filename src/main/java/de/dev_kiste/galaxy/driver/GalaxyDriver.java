@@ -1,6 +1,7 @@
 package de.dev_kiste.galaxy.driver;
 
 import de.dev_kiste.galaxy.messaging.MessageHandler;
+import de.dev_kiste.galaxy.util.GalaxyLogger;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -129,4 +130,6 @@ public interface GalaxyDriver {
      * @return CompletableFuture indicating if the reboot has been made
      */
     CompletableFuture<Boolean> reboot();
+
+    void setLogger(GalaxyLogger logger);
 }

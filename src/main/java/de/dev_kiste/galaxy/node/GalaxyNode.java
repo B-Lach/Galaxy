@@ -1,5 +1,6 @@
 package de.dev_kiste.galaxy.node;
 
+import de.dev_kiste.galaxy.util.GalaxyLogger;
 import de.dev_kiste.galaxy.node.middleware.GalaxyMiddleware;
 import de.dev_kiste.galaxy.driver.GalaxyDriver;
 import de.dev_kiste.galaxy.messaging.GalaxyMessage;
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Galaxy Node
@@ -21,7 +21,7 @@ public class GalaxyNode {
     private Optional<MessageHandler> messageHandler;
     private ArrayList<GalaxyMiddleware> middlewares;
 
-    private final Optional<Logger> logger;
+    private final Optional<GalaxyLogger> logger;
 
     private String address;
     private boolean didBootstrap = false;
@@ -30,11 +30,7 @@ public class GalaxyNode {
         driver = builder.getDriver();
         messageHandler = builder.getMessageHandler();
         middlewares = builder.getMiddlewares();
-        logger = Optional.ofNullable(
-                builder.getIsDebug() ?
-                        Logger.getLogger("Galaxy.GalaxyNode") :
-                        null
-        );
+        logger = builder.getLogger();
 
         logIfNeeded(Level.INFO,
                 "Node initialized\n" +
@@ -358,8 +354,6 @@ public class GalaxyNode {
      * @param message The message to log
      */
     private void logIfNeeded(Level level, String message) {
-        logger.ifPresent(logger -> {
-            logger.log(level, message);
-        });
+        logger.ifPresent(logger -> logger.log(level, message));
     }
 }
